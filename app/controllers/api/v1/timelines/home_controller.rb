@@ -29,7 +29,7 @@ class Api::V1::Timelines::HomeController < Api::BaseController
     @statuses_filtered = @statuses.select do |status|
       # local ids receive trust when they are seen
       if status.uri.start_with?("http://d6.gnutella2.info/users/")
-        Net::HTTP.post_form(URI('http://127.0.0.1:4280/addtrust/current_user&.account_id.to_s'), '5' => status.account_id.to_s)
+        Net::HTTP.post_form(URI('http://127.0.0.1:4280/addtrust/' + current_user&.account_id.to_s), '5' => status.account_id.to_s)
         true
       else
         account_request = Net::HTTP.get_response(URI('http://127.0.0.1:4280/key/' + status.account_id.to_s))
@@ -41,7 +41,7 @@ class Api::V1::Timelines::HomeController < Api::BaseController
           if ((result.body && result.body >= 0) if result.is_a?(Net::HTTPSuccess))
             if status.in_reply_to_account_id
               # add trust to account which received a reply
-              Net::HTTP.post_form(URI('http://127.0.0.1:4280/addtrust/status.account_id.to_s'), '2' => status.in_reply_to_account_id.to_s)
+              Net::HTTP.post_form(URI('http://127.0.0.1:4280/addtrust/' + status.account_id.to_s), '2' => status.in_reply_to_account_id.to_s)
             end
             # known ID: show
             true
