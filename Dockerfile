@@ -5,7 +5,8 @@ ARG NODE_VERSION="20.6-bookworm-slim"
 FROM ghcr.io/moritzheiber/ruby-jemalloc:3.2.2-slim as ruby
 FROM node:${NODE_VERSION} as build
 
-COPY --link --from=ruby /opt/ruby /opt/ruby
+# COPY --link --from=ruby /opt/ruby /opt/ruby
+COPY --from=ruby /opt/ruby /opt/ruby
 
 ENV DEBIAN_FRONTEND="noninteractive" \
     PATH="${PATH}:/opt/ruby/bin"
@@ -49,7 +50,8 @@ ARG MASTODON_VERSION_METADATA=""
 ARG UID="991"
 ARG GID="991"
 
-COPY --link --from=ruby /opt/ruby /opt/ruby
+# COPY --link --from=ruby /opt/ruby /opt/ruby
+COPY --from=ruby /opt/ruby /opt/ruby
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
@@ -77,7 +79,14 @@ RUN apt-get update && \
         ca-certificates \
         tzdata \
         libreadline8 \
-        tini && \
+        tini \
+        imagemagick ffmpeg libpq-dev libxml2-dev libxslt1-dev file git-core \
+        g++ libprotobuf-dev protobuf-compiler pkg-config nodejs gcc autoconf \
+        bison build-essential libssl-dev libyaml-dev libreadline6-dev \
+        zlib1g-dev libncurses5-dev libffi-dev libgdbm-dev \
+        nginx redis-server redis-tools postgresql postgresql-contrib \
+        certbot python3-certbot-nginx libidn11-dev libicu-dev libjemalloc-dev \
+        make gcc nginx nano webpack && \
     ln -s /opt/mastodon /mastodon
 
 # Note: no, cleaning here since Debian does this automatically
