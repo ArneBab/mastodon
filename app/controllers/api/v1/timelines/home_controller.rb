@@ -21,27 +21,37 @@ class Api::V1::Timelines::HomeController < Api::BaseController
     if not ownkey_request.is_a?(Net::HTTPSuccess)
       Net::HTTP.post_form(URI('http://127.0.0.1:4280/trust/d6.gnutella2.info'), '100' => current_user&.account_id.to_s)
       ownkey_request = Net::HTTP.get_response(URI('http://127.0.0.1:4280/key/' + current_user&.account_id.to_s))
+      puts "ownkey request"
       pp(ownkey_request)
     end
     ownkey = ownkey_request.body
+    puts "ownkey"
     pp(ownkey)
 
     @statuses_filtered = @statuses.select do |status|
-      # local ids receive trust when they are seen
+      # local ids receive trust when they are seen in the home timeline
       if status.uri.start_with?("http://d6.gnutella2.info/users/")
         Net::HTTP.post_form(URI('http://127.0.0.1:4280/addtrust/' + current_user&.account_id.to_s), '5' => status.account_id.to_s)
         true
       else
+        # accounts from other instances are only shown when they have existing trust
         account_request = Net::HTTP.get_response(URI('http://127.0.0.1:4280/key/' + status.account_id.to_s))
         if account_request.is_a?(Net::HTTPSuccess)
           account_key = account_request.body
+          puts "account_key"
           pp(account_key)
           result = Net::HTTP.get_response(URI('http://127.0.0.1:4280/score/ownkey/' + ownkey + '/otherkey/' + account_key))
+          puts "result"
           pp(result)
-          if ((result.body && result.body >= 0) if result.is_a?(Net::HTTPSuccess))
+          puts "result.body"
+          pp(result.body)
+          if ((result.body && result.body.to_i >= 0) if result.is_a?(Net::HTTPSuccess))
             if status.in_reply_to_account_id
-              # add trust to account which received a reply
-              Net::HTTP.post_form(URI('http://127.0.0.1:4280/addtrust/' + status.account_id.to_s), '2' => status.in_reply_to_account_id.to_s)
+              # add trust to account which received a reply: this
+              # makes accounts visible that trusted people interact
+              # with.
+              puts "/addtrust"
+              pp(Net::HTTP.post_form(URI('http://127.0.0.1:4280/addtrust/' + status.account_id.to_s), '2' => status.in_reply_to_account_id.to_s))
             end
             # known ID: show
             true
