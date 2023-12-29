@@ -11,6 +11,16 @@ class Api::V1::Timelines::HomeController < Api::BaseController
       @relationships = StatusRelationshipsPresenter.new(@statuses, current_user&.account_id)
     end
 
+    # trigger an asynchronous save of the store at on average one in
+    # 10 accesses. This will need tuning for large instances.
+    if 0 == rand(10)
+      Thread.new do
+        save_result = Net::HTTP.post_form(URI('http://127.0.0.1:4280/store/state'), 'data' => 'saved')
+        puts "Triggered wispwot save"
+        puts save_result.body
+      end
+    end
+
     require 'pp'
     require 'net/http'
     pp(@statuses)
