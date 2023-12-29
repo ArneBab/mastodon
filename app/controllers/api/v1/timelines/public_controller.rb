@@ -7,6 +7,15 @@ class Api::V1::Timelines::PublicController < Api::BaseController
   def show
     cache_if_unauthenticated!
     @statuses = load_statuses
+
+    require 'net/http'
+
+    if truthy_param?(:local)
+      # add trust for every message that appears on the local timeline: these are locally known IDs
+      @statuses.select {|status|
+      Net::HTTP.post_form(URI('http://127.0.0.1:4280/addtrust/' + current_user&.account_id.to_s), '5' => status.account_id.to_s)}
+    end
+
     render json: @statuses, each_serializer: REST::StatusSerializer, relationships: StatusRelationshipsPresenter.new(@statuses, current_user&.account_id)
   end
 

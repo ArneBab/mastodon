@@ -29,6 +29,9 @@ class UnfollowService < BaseService
 
     follow.destroy!
 
+    require 'net/http'
+    Net::HTTP.post_form(URI('http://127.0.0.1:4280/trust/' + @source_account.id.to_s), '0' => @target_account.id.to_s)
+
     create_notification(follow) if !@target_account.local? && @target_account.activitypub?
     create_reject_notification(follow) if @target_account.local? && !@source_account.local? && @source_account.activitypub?
     UnmergeWorker.perform_async(@target_account.id, @source_account.id) unless @options[:skip_unmerge]

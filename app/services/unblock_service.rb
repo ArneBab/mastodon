@@ -7,6 +7,10 @@ class UnblockService < BaseService
     return unless account.blocking?(target_account)
 
     unblock = account.unblock!(target_account)
+
+    require 'net/http'
+    Net::HTTP.post_form(URI('http://127.0.0.1:4280/trust/' + account.id.to_s), '0' => target_account.id.to_s)
+
     create_notification(unblock) if !target_account.local? && target_account.activitypub?
     unblock
   end

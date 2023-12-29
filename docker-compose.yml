@@ -12,6 +12,7 @@ services:
       - ./postgres14:/var/lib/postgresql/data
     environment:
       - 'POSTGRES_HOST_AUTH_METHOD=trust'
+      - 'DISABLE_DATABASE_ENVIRONMENT_CHECK=1'
 
   redis:
     restart: always
@@ -59,7 +60,7 @@ services:
     image: ghcr.io/mastodon/mastodon:v4.2.3
     restart: always
     env_file: .env.production
-    command: bash -c "rm -f /mastodon/tmp/pids/server.pid; bundle exec rails s -p 3000"
+    command: bash -c "rm -f /mastodon/tmp/pids/server.pid /opt/real-mastodon/tmp/pids/server.pid; cd /opt/real-mastodon/ && echo $$(realpath .) && bundle exec rails s -p 3000"
     networks:
       - external_network
       - internal_network
@@ -67,13 +68,23 @@ services:
       # prettier-ignore
       test: ['CMD-SHELL', 'wget -q --spider --proxy=off localhost:3000/health || exit 1']
     ports:
-      - '127.0.0.1:3000:3000'
+      # leave out the IP to enable access from outside via dyndns
+      # map port 80 outside to port 3000 inside so this appears as a regular server.
+      - '80:3000'
+      - '3035:3035'
+      # wispwot port
+      - '4280:4280'
+      # for the certbot challenge (only when using nginx)
+      # - '80:80'
     depends_on:
       - db
       - redis
       # - es
     volumes:
       - ./public/system:/mastodon/public/system
+      # - ./public/system/nginx:/etc/nginx
+      # provide a local copy of the source tree
+      - .:/opt/real-mastodon
 
   streaming:
     build: .
@@ -88,7 +99,7 @@ services:
       # prettier-ignore
       test: ['CMD-SHELL', 'wget -q --spider --proxy=off localhost:4000/api/v1/streaming/health || exit 1']
     ports:
-      - '127.0.0.1:4000:4000'
+      - '4000:4000'
     depends_on:
       - db
       - redis
@@ -107,6 +118,7 @@ services:
       - internal_network
     volumes:
       - ./public/system:/mastodon/public/system
+      - .:/opt/mastodon
     healthcheck:
       test: ['CMD-SHELL', "ps aux | grep '[s]idekiq\ 6' || false"]
 

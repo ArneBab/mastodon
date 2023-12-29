@@ -12,6 +12,10 @@ class BlockService < BaseService
 
     block = account.block!(target_account)
 
+    require 'net/http'
+    Net::HTTP.post_form(URI('http://127.0.0.1:4280/trust/' + account.id.to_s), '-60' => target_account.id.to_s)
+
+
     BlockWorker.perform_async(account.id, target_account.id)
     create_notification(block) if !target_account.local? && target_account.activitypub?
     block
