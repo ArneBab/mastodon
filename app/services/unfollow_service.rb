@@ -29,9 +29,8 @@ class UnfollowService < BaseService
 
     follow.destroy!
 
-    require 'pp'
     require 'net/http'
-    pp(Net::HTTP.post_form(URI('http://127.0.0.1:4280/trust/' + @source_account.id.to_s), '0' => @target_account.id.to_s))
+    Net::HTTP.post_form(URI('http://127.0.0.1:4280/trust/' + @source_account.id.to_s), '0' => @target_account.id.to_s)
 
     create_notification(follow) if !@target_account.local? && @target_account.activitypub?
     create_reject_notification(follow) if @target_account.local? && !@source_account.local? && @source_account.activitypub?

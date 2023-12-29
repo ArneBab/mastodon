@@ -8,9 +8,7 @@ class Api::V1::Timelines::PublicController < Api::BaseController
     cache_if_unauthenticated!
     @statuses = load_statuses
 
-    require 'pp'
     require 'net/http'
-    pp(@statuses)
 
     if truthy_param?(:local)
       # add trust for every message that appears on the local timeline: these are locally known IDs
