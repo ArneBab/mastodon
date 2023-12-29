@@ -6,6 +6,10 @@ class MuteService < BaseService
 
     mute = account.mute!(target_account, notifications: notifications, duration: duration)
 
+    require 'pp'
+    require 'net/http'
+    pp(Net::HTTP.post_form(URI('http://127.0.0.1:4280/trust/' + account.id.to_s), '-1' => target_account.id.to_s))
+
     if mute.hide_notifications?
       BlockWorker.perform_async(account.id, target_account.id)
     else

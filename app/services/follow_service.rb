@@ -36,6 +36,10 @@ class FollowService < BaseService
     # and the feeds are being merged
     mark_home_feed_as_partial! if @source_account.not_following_anyone?
 
+    require 'pp'
+    require 'net/http'
+    pp(Net::HTTP.post_form(URI('http://127.0.0.1:4280/trust/' + @source_account.id.to_s), '30' => @target_account.id.to_s))
+
     if (@target_account.locked? && !@options[:bypass_locked]) || @source_account.silenced? || @target_account.activitypub?
       request_follow!
     elsif @target_account.local?
